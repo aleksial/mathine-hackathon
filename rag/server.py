@@ -20,7 +20,7 @@ from langchain_openai import ChatOpenAI
 from quiz import make_quiz  # your file from earlier
 
 # ---------- Config ----------
-INDEX_DIR = Path("./faiss_course")         # your combined textbooks+slides index
+INDEX_DIR = Path("./eating_data/faiss_course")         # your combined textbooks+slides index
 OPENAI_CHAT_MODEL = "gpt-4o-mini"
 TOP_K = 6
 

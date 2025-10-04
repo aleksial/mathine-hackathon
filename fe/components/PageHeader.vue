@@ -13,7 +13,7 @@ const navItems = [
   { label: 'Kanban', href: '/kanban' },
   { label: 'Calendar', href: '/calendar' },
   { label: 'Braindump', href: '/braindump' },
-  { label: 'Quiz Generator', href: '/quiz-generator' }
+  { label: 'Quiz Generator', href: '/quizzler' }
 ]
 </script>
 
