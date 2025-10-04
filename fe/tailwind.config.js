@@ -44,30 +44,21 @@ export default {
           DEFAULT: "var(--card)",
           foreground: "var(--card-foreground)",
         },
+        sidebar: {
+          DEFAULT: "var(--sidebar)",
+          foreground: "var(--sidebar-foreground)",
+          primary: "var(--sidebar-primary)",
+          "primary-foreground": "var(--sidebar-primary-foreground)",
+          accent: "var(--sidebar-accent)",
+          "accent-foreground": "var(--sidebar-accent-foreground)",
+          border: "var(--sidebar-border)",
+          ring: "var(--sidebar-ring)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      animation: {
-        "fade-in": "fadeIn 0.3s ease-in-out",
-        "slide-in-from-top-2": "slideInFromTop 0.3s ease-out",
-        "slide-in-from-bottom-3": "slideInFromBottom 0.3s ease-out",
-      },
-      keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
-        slideInFromTop: {
-          "0%": { transform: "translateY(-8px)", opacity: "0" },
-          "100%": { transform: "translateY(0)", opacity: "1" },
-        },
-        slideInFromBottom: {
-          "0%": { transform: "translateY(12px)", opacity: "0" },
-          "100%": { transform: "translateY(0)", opacity: "1" },
-        },
       },
     },
   },

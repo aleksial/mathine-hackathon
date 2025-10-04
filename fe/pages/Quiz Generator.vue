@@ -1,133 +1,166 @@
+<!-- filepath: fe/pages/Quiz Generator.vue -->
 <template>
-  <div class="flex min-h-screen p-6 gap-6 bg-pink-50 font-sans">
-    <!-- Left Column: Prompt + Preview -->
-    <div class="flex-1 flex flex-col">
-      <!-- Header -->
-      <h2 class="text-3xl font-bold mb-4 text-pink-600 drop-shadow-sm">✨ Quiz Generator ✨</h2>
+  <div>
+    <div class="h-screen flex bg-background overflow-hidden">
+      <!-- Question Navigator Sidebar -->
+      <QuestionNavigator
+        :total-questions="totalQuestions"
+        :current-question="currentQuestionIndex + 1"
+        :answered-questions="answeredQuestions"
+        @question-click="handleQuestionClick"
+      />
 
-      <!-- Response / Preview -->
-      <div class="flex-1 overflow-auto border-2 border-pink-200 rounded-3xl p-5 bg-pink-100 mb-4 shadow-inner">
-        <h3 class="font-semibold mb-2 text-pink-700">🎉 Generated Quiz</h3>
-        <div v-if="quizResponse">
-          <pre class="whitespace-pre-wrap">{{ quizResponse }}</pre>
-        </div>
-        <p v-else class="text-pink-400 italic">Your adorable quiz will appear here...</p>
-      </div>
+      <!-- Main Content -->
+      <div class="flex-1 flex flex-col h-screen">
+        <!-- Header -->
+        <header class="border-b border-border bg-card flex-shrink-0">
+          <div class="max-w-4xl mx-auto px-6 py-4">
+            <h1 class="text-2xl font-semibold text-card-foreground">{{ sampleQuizData.title }}</h1>
+            <p class="text-sm text-muted-foreground mt-1">
+              Page {{ currentPage + 1 }} of {{ totalPages }} • Question {{ currentQuestionIndex + 1 }} of {{ totalQuestions }}
+            </p>
+          </div>
+        </header>
 
-      <!-- Prompt Input at Bottom -->
-      <div class="flex gap-3">
-        <textarea
-          v-model="promptText"
-          placeholder="Type your magical prompt here..."
-          class="flex-1 border-2 border-pink-200 rounded-3xl p-4 h-28 resize-none focus:outline-none focus:ring-4 focus:ring-pink-300 bg-pink-50 placeholder-pink-300"
-        ></textarea>
-        <button
-          @click="submitPrompt"
-          class="bg-pink-500 text-white px-6 py-4 rounded-3xl font-bold hover:bg-pink-600 transition-all shadow-lg hover:scale-105"
-        >
-          Generate ✨
-        </button>
-      </div>
-    </div>
+        <!-- Question Content - Scrollable middle section -->
+        <main class="flex-1 overflow-y-auto bg-background">
+          <div class="max-w-4xl mx-auto px-6 py-8">
+            <QuizQuestion
+              :question="currentQuestion"
+              :selected-answer="answers[currentQuestion.id] || null"
+              @answer-change="handleAnswerChange"
+              :question-number="currentQuestionIndex + 1"
+            />
+          </div>
+        </main>
 
-    <!-- Right Column: Quiz Settings -->
-    <div class="w-72 border-2 border-pink-200 rounded-3xl p-5 bg-pink-50 flex-shrink-0 shadow-md">
-      <h3 class="text-xl font-semibold mb-4 text-pink-700">⚙️ Quiz Settings</h3>
+        <!-- Footer Navigation - Always at bottom -->
+        <footer class="border-t border-border bg-card flex-shrink-0">
+          <div class="max-w-4xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+              <div class="flex gap-2">
+                <button
+                  @click="handlePreviousPage"
+                  :disabled="currentPage === 0"
+                  class="inline-flex items-center px-3 py-2 text-sm border border-border rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Icons name="ChevronLeft" :size="16" class="mr-1" />
+                  Previous Page
+                </button>
+                <button
+                  @click="handleNextPage"
+                  :disabled="currentPage === totalPages - 1"
+                  class="inline-flex items-center px-3 py-2 text-sm border border-border rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next Page
+                  <Icons name="ChevronRight" :size="16" class="ml-1" />
+                </button>
+              </div>
 
-      <!-- Time Limit -->
-      <div class="mb-4">
-        <label class="block mb-1 font-medium text-pink-600">⏰ Time Limit (minutes)</label>
-        <input
-          type="number"
-          min="0"
-          v-model.number="timeLimit"
-          class="border-2 border-pink-200 rounded-full p-2 w-full focus:ring-2 focus:ring-pink-300"
-        />
-      </div>
-
-      <!-- Number of Questions -->
-      <div class="mb-4">
-        <label class="block mb-1 font-medium text-pink-600">📝 Number of Questions</label>
-        <input
-          type="number"
-          min="1"
-          v-model.number="numQuestions"
-          class="border-2 border-pink-200 rounded-full p-2 w-full focus:ring-2 focus:ring-pink-300"
-        />
-      </div>
-
-      <!-- Default Question Type -->
-      <div class="mb-4">
-        <label class="block mb-1 font-medium text-pink-600">❓ Default Question Type</label>
-        <select
-          v-model="defaultQuestionType"
-          class="border-2 border-pink-200 rounded-full p-2 w-full focus:ring-2 focus:ring-pink-300 bg-pink-50"
-        >
-          <option value="mcq">Multiple Choice</option>
-          <option value="truefalse">True / False</option>
-          <option value="short">Short Answer</option>
-        </select>
-      </div>
-
-      <!-- Difficulty Slider -->
-      <div>
-        <label class="block mb-1 font-medium text-pink-600">💪 Difficulty</label>
-        <input
-          type="range"
-          min="1"
-          max="5"
-          step="1"
-          v-model.number="difficulty"
-          class="w-full accent-pink-400"
-        />
-        <div class="text-sm text-pink-700 mt-1">Level: {{ difficulty }}</div>
+              <div class="flex gap-2">
+                <button
+                  @click="handlePrevious"
+                  :disabled="currentQuestionIndex === 0"
+                  class="inline-flex items-center px-3 py-2 border border-border rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Icons name="ChevronLeft" :size="16" class="mr-1" />
+                  Previous
+                </button>
+                <button
+                  @click="handleNext"
+                  :disabled="currentQuestionIndex === totalQuestions - 1"
+                  class="inline-flex items-center px-3 py-2 border border-border rounded-md bg-background hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                  <Icons name="ChevronRight" :size="16" class="ml-1" />
+                </button>
+                <button
+                  @click="handleSubmit"
+                  class="ml-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                >
+                  Submit Quiz
+                </button>
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from 'vue'
+import { sampleQuizData } from '@/composables/useQuizData'
 
-const promptText = ref("");
-const quizResponse = ref("");
+// Disable the default layout for this page
+definePageMeta({
+  layout: false
+})
 
-// Quiz settings
-const timeLimit = ref(30); // minutes
-const numQuestions = ref(5);
-const defaultQuestionType = ref("mcq");
-const difficulty = ref(3); // 1 to 5
+const QUESTIONS_PER_PAGE = 10
 
-async function submitPrompt() {
-  if (!promptText.value) return;
+const currentQuestionIndex = ref(0)
+const answers = ref<Record<number, string>>({})
 
-  // Simulate generating a quiz (replace with API call)
-  quizResponse.value = "Generating quiz...\n\n";
-  setTimeout(() => {
-    quizResponse.value = `✨ Quiz generated from prompt: "${promptText.value}" ✨\n
-⏰ Time limit: ${timeLimit.value} minutes
-📝 Number of questions: ${numQuestions.value}
-❓ Default type: ${defaultQuestionType.value}
-💪 Difficulty: ${difficulty.value}/5
+const totalQuestions = sampleQuizData.questions.length
+const currentPage = computed(() => Math.floor(currentQuestionIndex.value / QUESTIONS_PER_PAGE))
+const totalPages = computed(() => Math.ceil(totalQuestions / QUESTIONS_PER_PAGE))
 
-${Array.from({ length: numQuestions.value }, (_, i) => `${i + 1}. Question ${i + 1} (${defaultQuestionType.value})`).join("\n")}`;
-  }, 1000);
+const currentQuestion = computed(() => sampleQuizData.questions[currentQuestionIndex.value])
+const answeredQuestions = computed(() => new Set(Object.keys(answers.value).map(Number)))
 
-  promptText.value = ""; // clear input after submission
+const handleAnswerChange = (answer: string) => {
+  answers.value = {
+    ...answers.value,
+    [currentQuestion.value.id]: answer,
+  }
+}
+
+const handleQuestionClick = (questionNumber: number) => {
+  currentQuestionIndex.value = questionNumber - 1
+}
+
+const handlePrevious = () => {
+  if (currentQuestionIndex.value > 0) {
+    currentQuestionIndex.value = currentQuestionIndex.value - 1
+  }
+}
+
+const handleNext = () => {
+  if (currentQuestionIndex.value < totalQuestions - 1) {
+    currentQuestionIndex.value = currentQuestionIndex.value + 1
+  }
+}
+
+const handlePreviousPage = () => {
+  if (currentPage.value > 0) {
+    currentQuestionIndex.value = (currentPage.value - 1) * QUESTIONS_PER_PAGE
+  }
+}
+
+const handleNextPage = () => {
+  if (currentPage.value < totalPages.value - 1) {
+    currentQuestionIndex.value = (currentPage.value + 1) * QUESTIONS_PER_PAGE
+  }
+}
+
+const handleSubmit = () => {
+  let correct = 0
+  sampleQuizData.questions.forEach((q) => {
+    const userAnswer = answers.value[q.id]
+    if (!userAnswer) return
+
+    if (q.type === "text-input") {
+      const normalizedAnswer = userAnswer.toLowerCase().trim()
+      const isCorrect =
+        q.acceptableAnswers?.some((acceptable) => acceptable.toLowerCase() === normalizedAnswer) ||
+        q.correctAnswer.toLowerCase() === normalizedAnswer
+      if (isCorrect) correct++
+    } else {
+      if (userAnswer === q.correctAnswer) correct++
+    }
+  })
+  alert(`Quiz submitted! You answered ${correct} out of ${totalQuestions} questions correctly.`)
 }
 </script>
-
-<style>
-/* Optional: cute scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #ffe4e6;
-  border-radius: 8px;
-}
-::-webkit-scrollbar-thumb {
-  background: #f472b6;
-  border-radius: 8px;
-}
-</style>
