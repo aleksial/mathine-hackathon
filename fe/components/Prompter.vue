@@ -111,8 +111,8 @@
               </div>
               <div class="flex items-center gap-2">
                 <button
-                  @click="generateQuizForTopic(selectedTopic)"
-                  class="professor-button px-3 py-1.5 text-xs flex items-center gap-1"
+                  @click="selectedTopic && generateQuizForTopic(selectedTopic)"
+                  class="professor-button w-full px-3 py-2 text-sm"
                 >
                   <Icons name="Zap" :size="12" />
                   Generate Quiz
@@ -184,24 +184,24 @@
 
             <!-- Topic Input Area -->
             <div class="p-4 border-t border-border flex-shrink-0 glass-effect">
-              <div class="space-y-3">
-                <div class="flex gap-3">
-                  <input
-                    v-model="currentTopicMessage"
-                    @keydown.enter="sendTopicMessage"
-                    :placeholder="`Ask questions about ${selectedTopic.title}...`"
-                    class="flex-1 px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
-                  />
-                  <button
-                    @click="sendTopicMessage"
-                    :disabled="!currentTopicMessage.trim()"
-                    class="professor-button px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Icons name="Send" :size="16" />
-                  </button>
-                </div>
+            <div class="space-y-3">
+              <div class="flex gap-3">
+                <input
+                  v-model="currentMessage"
+                  @keydown.enter="sendMessage"
+                  :placeholder="`Generate a quiz for ${selectedCourse?.id || 'the selected course'}...`"
+                  class="flex-1 px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+                />
+                <button
+                  @click="sendMessage"
+                  :disabled="!currentMessage.trim() || !selectedCourse"
+                  class="professor-button px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Icons name="Send" :size="16" />
+                </button>
               </div>
             </div>
+          </div>
           </div>
         </div>
 
@@ -251,7 +251,7 @@
                 </div>
                 <h4 class="text-base font-semibold text-foreground mb-2">Ready to Help!</h4>
                 <p class="text-xs text-muted-foreground mb-3">
-                Ask questions about {{ selectedCourse.id }} below or select a topic above to get started.
+                Generate a quiz about {{ selectedCourse.id }}.
                 </p>
             </div>
             </div>
@@ -291,6 +291,12 @@
             </div>
           </div>
 
+          <QuizConfig
+            v-model="quizCfg"
+            :busy="quizStore.loading"
+            :max-total="30"
+            @generate="onQuizGenerate"
+          />
           <!-- General Input Area -->
           <div class="p-4 border-t border-border flex-shrink-0 glass-effect">
             <div class="space-y-3">
@@ -298,12 +304,12 @@
                 <input
                   v-model="currentMessage"
                   @keydown.enter="sendMessage"
-                  :placeholder="`Generate a quiz for ${selectedCourse.id}...`"
+                  :placeholder="`Generate a quiz for ${selectedCourse?.id || 'the selected course'}...`"
                   class="flex-1 px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
                 />
                 <button
                   @click="sendMessage"
-                  :disabled="!currentMessage.trim()"
+                  :disabled="!currentMessage.trim() || !selectedCourse"
                   class="professor-button px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Icons name="Send" :size="16" />
@@ -321,6 +327,11 @@
 import { ref, computed } from 'vue'
 import { cn } from '@/utils/cn'
 import { availableCourses, getCourseQuestions, type Course, type CourseQuestion, type SubQuestion } from '@/composables/useCourseQuestions'
+import { useQuizStore } from '~/src/stores/quizStore'
+
+const quizStore = useQuizStore()
+const quizCfg = ref({ total: 10, mc: 6, sa: 4 })
+
 
 interface Message {
   id: string
@@ -332,58 +343,52 @@ interface Message {
 // Universal topics that work for all courses
 const universalTopics: SubQuestion[] = [
   {
-    id: 'fundamentals',
-    title: 'Fundamentals & Basics',
+    id: 'intro',
+    title: 'Unit 0: Introduction',
     description: 'Core concepts and foundational knowledge essential for understanding the subject',
     category: 'Foundation'
   },
   {
-    id: 'applications',
-    title: 'Real-World Applications',
-    description: 'Practical uses and implementations in industry and everyday scenarios',
+    id: 'discrete-math',
+    title: 'Unit 1: Discrete Math',
+    description: 'Logical notation and combinatorics',
     category: 'Application'
   },
   {
-    id: 'problem-solving',
-    title: 'Problem Solving & Analysis',
-    description: 'Analytical thinking, troubleshooting, and solution development strategies',
+    id: 'pseudocode',
+    title: 'Unit 2: Pseudocode',
+    description: 'Using pseudocode to support the analysis of algorithms and data structures',
     category: 'Analysis'
   },
   {
-    id: 'theory-practice',
-    title: 'Theory to Practice',
-    description: 'Bridging theoretical concepts with hands-on implementation and examples',
-    category: 'Integration'
+    id: 'recursion',
+    title: 'Unit 3: Recursion',
+    description: 'Intro to using recursive methods as opposed to iterative methods',
+    category: 'Recursion'
   },
   {
-    id: 'advanced-concepts',
-    title: 'Advanced Concepts',
-    description: 'Complex topics and cutting-edge developments in the field',
-    category: 'Advanced'
+    id: 'proofs',
+    title: 'Unit 4: Proofs',
+    description: 'Write proofs by various methods such as induction and contradiction',
+    category: 'Proofs'
   },
   {
-    id: 'case-studies',
-    title: 'Case Studies & Examples',
-    description: 'Detailed examination of real scenarios and their solutions',
-    category: 'Practice'
+    id: 'asymptotic-analysis',
+    title: 'Unit 5: Asymptotic Analysis',
+    description: 'Methods for analyzing the theoretical runtimes of algorithms',
+    category: 'Time Complexity'
   },
   {
-    id: 'best-practices',
-    title: 'Best Practices & Standards',
-    description: 'Industry standards, methodologies, and recommended approaches',
+    id: 'abstract-data-types',
+    title: 'Unit 6: Abstract Data Types',
+    description: 'A deeper look at data types and their use cases',
     category: 'Standards'
   },
   {
-    id: 'tools-techniques',
-    title: 'Tools & Techniques',
-    description: 'Software, hardware, and methodological tools used in the field',
+    id: 'course-material',
+    title: 'Course Outline',
+    description: 'Information about CSC225 itself (grade requirements, late policy, etc)',
     category: 'Tools'
-  },
-  {
-    id: 'future-trends',
-    title: 'Future Trends & Innovation',
-    description: 'Emerging technologies and future directions in the field',
-    category: 'Innovation'
   }
 ]
 
@@ -405,6 +410,18 @@ const availableTopics = computed(() => {
   return universalTopics
 })
 
+
+function buildPromptWithConfig(base: string) {
+  const coursePart = selectedCourse.value
+    ? ` (course: ${selectedCourse.value.id})`
+    : ''
+  const hasExplicitN = /\bn=\d+\b/i.test(base)
+  const nPart = hasExplicitN ? '' : ` n=${quizCfg.value.total}`
+  const distro = ` Use exactly ${quizCfg.value.total} questions: ${quizCfg.value.mc} multiple-choice and ${quizCfg.value.sa} text-input.`
+
+  return `${base}${coursePart}.${distro}${nPart}`.trim()
+}
+
 const selectCourse = (course: Course) => {
   selectedCourse.value = course
   emit('courseSelected', course.id)
@@ -425,46 +442,45 @@ const selectTopic = (topic: SubQuestion) => {
   currentTopicMessage.value = ''
 }
 
+async function onQuizGenerate(cfg: { total: number; mc: number; sa: number }) {
+  const base = currentMessage.value.trim() || `Create a quiz`
+  const prompt = buildPromptWithConfig(base)
+  quizStore.clear()
+  quizStore.loading = true
+  await navigateTo({ path: '/quizzler', query: { prompt } })
+}
+
+
 const generateQuizForTopic = async (topic: SubQuestion) => {
-  // Navigate directly to Quiz Generator page
+  if (!selectedCourse.value) return
+
+  // natural prompt + config
+  const base = `Create a quiz about ${topic.id}`
+  const prompt = buildPromptWithConfig(base)
+
+  // prepare store & redirect immediately so the quiz page shows loading
+  quizStore.clear()
+  quizStore.loading = true
+
   await navigateTo({
-    path: '/Quiz Generator',
-    query: {
-      course: selectedCourse.value?.id,
-      topic: topic.id,
-      title: topic.title,
-      description: topic.description
-    }
+    path: '/quizzler',       // keep your route
+    query: { prompt }        // quiz page will read ?prompt=... and call backend
   })
 }
 
 const sendMessage = async () => {
-  if (!currentMessage.value.trim()) return
+  const raw = currentMessage.value.trim()
+  if (!raw || !selectedCourse.value) return
 
-  const userMessage: Message = {
-    id: Date.now().toString(),
-    type: 'user',
-    content: currentMessage.value,
-    timestamp: new Date()
-  }
-  messages.value.push(userMessage)
+  // build prompt with config
+  const prompt = buildPromptWithConfig(raw)
 
-  const messageContent = currentMessage.value
-  currentMessage.value = ''
-
-  isTyping.value = true
-
-  setTimeout(() => {
-    isTyping.value = false
-    const aiMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      type: 'assistant',
-      content: `I can help you with general questions about ${selectedCourse.value?.id}. For more specific help, try clicking on individual topics above to access focused chat sessions. "${messageContent}" is a great question - would you like to explore a specific topic in more detail?`,
-      timestamp: new Date()
-    }
-    messages.value.push(aiMessage)
-  }, 1500)
+  // set loading and go to quiz page; it will call the API and show spinner
+  quizStore.clear()
+  quizStore.loading = true
+  await navigateTo({ path: '/quizzler', query: { prompt } })
 }
+
 
 const sendTopicMessage = async () => {
   if (!currentTopicMessage.value.trim() || !selectedTopic.value) return
