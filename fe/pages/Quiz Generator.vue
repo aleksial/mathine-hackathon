@@ -99,14 +99,11 @@ definePageMeta({
 })
 
 const QUESTIONS_PER_PAGE = 10
-
 const currentQuestionIndex = ref(0)
 const answers = ref<Record<number, string>>({})
-
 const totalQuestions = sampleQuizData.questions.length
 const currentPage = computed(() => Math.floor(currentQuestionIndex.value / QUESTIONS_PER_PAGE))
 const totalPages = computed(() => Math.ceil(totalQuestions / QUESTIONS_PER_PAGE))
-
 const currentQuestion = computed(() => sampleQuizData.questions[currentQuestionIndex.value])
 const answeredQuestions = computed(() => new Set(Object.keys(answers.value).map(Number)))
 

@@ -17,6 +17,13 @@ export default defineNuxtConfig({
 
   // CSS - try absolute path instead
   css: ['@/assets/css/main.css'],
+  colorMode: {
+    preference: 'dark',
+    fallback: 'dark',
+    classPrefix: '',
+    classSuffix: '',
+    storageKey: 'nuxt-color-mode'
+  },
 
   // Modules
   modules: ["@pinia/nuxt", "@nuxtjs/tailwindcss"],
